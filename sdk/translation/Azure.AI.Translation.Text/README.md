@@ -1,20 +1,18 @@
 # Azure Text Translation client library for .NET
 
-Text translation is a cloud-based REST API feature of the Translator service that uses neural machine translation technology to enable quick and accurate source-to-target text translation in real time across all supported languages.
+Text translation is a cloud service that uses neural machine translation technology to enable quick and accurate source-to-target text translation in real time across all supported languages.
 
 Use the Text Translation client library for .NET to:
 
-* Return a list of languages supported by Translate, Transliterate, and Dictionary operations.
+* Get a list of languages supported by Translate and Transliterate operations, and LLM models available for translations.
 
-* Render single source-language text to multiple target-language texts with a single request.
+* Translate texts from source languages into target languages with configurable options.
 
-* Convert text of a source language in letters of a different script.
+* Convert text from a source language into letters of a different script.
 
-* Return equivalent words for the source term in the target language.
+* Leverage LLM models to translate with tone variants and gender-specific options.
 
-* Return grammatical structure and context examples for the source term and target term pair.
-
-[Source code](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/translation/Azure.AI.Translation.Text/src) | [API reference documentation](https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-reference) | [Product documentation](https://learn.microsoft.com/azure/cognitive-services/translator/)
+[Source code](https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/translation/Azure.AI.Translation.Text/src) | [API reference documentation](https://learn.microsoft.com/azure/ai-services/translator/text-translation/preview/rest-api-guide) | [Product documentation](https://learn.microsoft.com/azure/cognitive-services/translator/)
 
 ## Getting started
 
@@ -145,6 +143,7 @@ For samples on using the `languages` endpoint refer to more samples [here][langu
 Please refer to the service documentation for a conceptual discussion of [languages][languages_doc].
 
 ### Translate
+
 The simplest use of the Translate method is to invoke it with a single target language and one input string.
 
 ```C# Snippet:GetTextTranslation
@@ -156,6 +155,31 @@ try
     Response<IReadOnlyList<TranslatedTextItem>> response = client.Translate(targetLanguage, inputText);
     IReadOnlyList<TranslatedTextItem> translations = response.Value;
     TranslatedTextItem translation = translations.FirstOrDefault();
+
+    Console.WriteLine($"Detected languages of the input text: {translation?.DetectedLanguage?.Language} with score: {translation?.DetectedLanguage?.Score}.");
+    Console.WriteLine($"Text was translated to: '{translation?.Translations?.FirstOrDefault().Language}' and the result is: '{translation?.Translations?.FirstOrDefault()?.Text}'.");
+}
+catch (RequestFailedException exception)
+{
+    Console.WriteLine($"Error Code: {exception.ErrorCode}");
+    Console.WriteLine($"Message: {exception.Message}");
+}
+```
+
+This sample demonstrates Translation using `GPT-4o mini` deployment. Using an LLM model requires you to have a Foundry resource. For more information, see [Configure Azure resources][translator_resource_create].
+
+```C# Snippet:GetTextTranslationLlm
+try
+{
+    string targetLanguage = "cs";
+    string llmModelname = "gpt-4o-mini";
+    string inputText = "This is a test.";
+
+    TranslationTarget target = new TranslationTarget(targetLanguage, deploymentName: llmModelname);
+    TranslateInputItem input = new TranslateInputItem(inputText, target);
+
+    Response<TranslatedTextItem> response = client.Translate(input);
+    TranslatedTextItem translation = response.Value;
 
     Console.WriteLine($"Detected languages of the input text: {translation?.DetectedLanguage?.Language} with score: {translation?.DetectedLanguage?.Score}.");
     Console.WriteLine($"Text was translated to: '{translation?.Translations?.FirstOrDefault().Language}' and the result is: '{translation?.Translations?.FirstOrDefault()?.Text}'.");
@@ -279,12 +303,12 @@ This project has adopted the [Microsoft Open Source Code of Conduct][code_of_con
 
 [translator_client_class]: https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/translation/Azure.AI.Translation.Text/src/Custom/TextTranslationClient.cs
 
-[translator_auth]: https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-reference#authentication
+[translator_auth]: https://learn.microsoft.com/azure/ai-services/translator/text-translation/reference/authentication
 [translator_limits]: https://learn.microsoft.com/azure/cognitive-services/translator/request-limits
 
-[languages_doc]: https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-languages
-[translate_doc]: https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-translate
-[transliterate_doc]: https://learn.microsoft.com/azure/cognitive-services/translator/reference/v3-0-transliterate
+[languages_doc]: https://learn.microsoft.com/azure/ai-services/translator/text-translation/preview/get-languages
+[translate_doc]: https://learn.microsoft.com/azure/ai-services/translator/text-translation/preview/translate-api
+[transliterate_doc]: https://learn.microsoft.com/azure/ai-services/translator/text-translation/preview/transliterate-api
 
 [client_sample]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/translation/Azure.AI.Translation.Text/samples/Sample0_CreateClient.md
 [languages_sample]: https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/translation/Azure.AI.Translation.Text/samples/Sample1_GetLanguages.md
